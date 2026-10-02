@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense & Budget Visualizer</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="header-icon">💰</span>
+        <h1>BudgetTrack</h1>
+      </div>
+      <button id="themeToggle" class="btn-icon" aria-label="Toggle dark/light mode" title="Toggle theme">
+        <span id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="container">
+
+    <!-- BALANCE CARD -->
+    <section class="card balance-card" id="balanceCard">
+      <div class="balance-grid">
+        <div class="balance-item">
+          <span class="balance-label">Total Spent</span>
+          <span class="balance-amount" id="totalSpent">Rp 0</span>
+        </div>
+        <div class="balance-item">
+          <span class="balance-label">This Month</span>
+          <span class="balance-amount" id="monthlyTotal">Rp 0</span>
+        </div>
+      </div>
+      <div class="limit-row" id="limitRow">
+        <div class="limit-bar-wrap">
+          <div class="limit-bar-track">
+            <div class="limit-bar-fill" id="limitBarFill"></div>
+          </div>
+          <span class="limit-label" id="limitLabel">No limit set</span>
+        </div>
+        <button class="btn-link" id="setLimitBtn">Set Limit</button>
+      </div>
+      <!-- Inline limit input (hidden by default) -->
+      <div class="limit-input-row hidden" id="limitInputRow">
+        <input type="number" id="limitInput" class="input-field" placeholder="Enter spending limit (Rp)" min="0" />
+        <button class="btn-primary btn-sm" id="saveLimitBtn">Save</button>
+        <button class="btn-ghost btn-sm" id="cancelLimitBtn">Cancel</button>
+      </div>
+    </section>
+
+    <!-- INPUT FORM -->
+    <section class="card">
+      <h2 class="section-title">Add Transaction</h2>
+      <form id="transactionForm" novalidate>
+        <div class="form-group">
+          <label for="itemName" class="form-label">Item Name</label>
+          <input
+            type="text"
+            id="itemName"
+            class="input-field"
+            placeholder="e.g. Lunch, Grab, Movie"
+            maxlength="60"
+            autocomplete="off"
+          />
+          <span class="error-msg hidden" id="nameError">Please enter an item name.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="itemAmount" class="form-label">Amount (Rp)</label>
+          <input
+            type="number"
+            id="itemAmount"
+            class="input-field"
+            placeholder="e.g. 25000"
+            min="1"
+          />
+          <span class="error-msg hidden" id="amountError">Please enter a valid amount.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="itemCategory" class="form-label">Category</label>
+          <div class="select-wrap">
+            <select id="itemCategory" class="input-field select-field">
+              <!-- Options injected by JS -->
+            </select>
+          </div>
+          <span class="error-msg hidden" id="categoryError">Please select a category.</span>
+        </div>
+
+        <!-- Custom category inline input -->
+        <div class="form-group hidden" id="customCategoryGroup">
+          <label for="customCategoryInput" class="form-label">New Category Name</label>
+          <div class="custom-cat-row">
+            <input
+              type="text"
+              id="customCategoryInput"
+              class="input-field"
+              placeholder="e.g. Health, Shopping"
+              maxlength="30"
+            />
+            <button type="button" class="btn-primary btn-sm" id="addCategoryBtn">Add</button>
+            <button type="button" class="btn-ghost btn-sm" id="cancelCategoryBtn">Cancel</button>
+          </div>
+          <span class="error-msg hidden" id="customCatError">Please enter a category name.</span>
+        </div>
+
+        <button type="submit" class="btn-primary btn-full">+ Add Transaction</button>
+      </form>
+    </section>
+
+    <!-- CHART SECTION -->
+    <section class="card">
+      <h2 class="section-title">Spending by Category</h2>
+      <div class="chart-wrap">
+        <canvas id="spendingChart" aria-label="Spending pie chart" role="img"></canvas>
+        <p class="chart-empty hidden" id="chartEmpty">No transactions yet. Add one above!</p>
+      </div>
+    </section>
+
+    <!-- TRANSACTION LIST + CONTROLS -->
+    <section class="card">
+      <div class="list-header">
+        <h2 class="section-title">Transactions</h2>
+        <span class="tx-count" id="txCount">0 items</span>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-row">
+        <div class="control-group">
+          <label for="monthFilter" class="control-label">Month</label>
+          <select id="monthFilter" class="input-field select-field select-sm">
+            <!-- Options injected by JS -->
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="sortControl" class="control-label">Sort by</label>
+          <select id="sortControl" class="input-field select-field select-sm">
+            <option value="date-desc">Date (Newest)</option>
+            <option value="date-asc">Date (Oldest)</option>
+            <option value="amount-desc">Amount (High→Low)</option>
+            <option value="amount-asc">Amount (Low→High)</option>
+            <option value="category-asc">Category (A→Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Transaction list -->
+      <ul class="tx-list" id="transactionList" aria-label="Transaction list">
+        <!-- Items injected by JS -->
+      </ul>
+      <p class="list-empty hidden" id="listEmpty">No transactions found. Try adding one!</p>
+    </section>
+
+    <!-- MONTHLY SUMMARY -->
+    <section class="card">
+      <button class="summary-toggle" id="summaryToggle" aria-expanded="false">
+        <span>📊 Monthly Summary</span>
+        <span class="toggle-arrow" id="summaryArrow">▼</span>
+      </button>
+      <div class="summary-body hidden" id="summaryBody">
+        <p class="summary-month" id="summaryMonthLabel"></p>
+        <ul class="summary-list" id="summaryList">
+          <!-- Items injected by JS -->
+        </ul>
+        <p class="summary-empty hidden" id="summaryEmpty">No data for this month.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="app-footer">
+    <p>BudgetTrack &copy; 2026 — Data stored locally in your browser</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
